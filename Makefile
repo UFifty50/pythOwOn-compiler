@@ -29,7 +29,11 @@ WDELOBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)\\%.o)
 ####################### Targets beginning here #########################
 ########################################################################
 
-all: $(APPNAME)
+all: build
+
+build:
+	@[ -d obj ] || mkdir obj
+	$(MAKE) $(APPNAME)
 
 # Builds the app
 $(APPNAME): $(OBJ)
@@ -49,4 +53,4 @@ clean:
 # Cleans complete project
 .PHONY: cleanw
 cleanw:
-	$(DEL) $(WDELOBJ) $(DEP) $(APPNAME)$(EXE)
+	$(DEL) $(WDELOBJ) $(DEP) $(APPNAME) $(EXE)
