@@ -64,19 +64,44 @@ static bool isFalsey(Value value) {
     return IS_NONE(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
-static void concatenate() {
-    ObjString* b = asString(pop());
-    ObjString* a = asString(pop());
+static void concatenateString() {
+    char* b = asString(pop())->chars;
+    char* a = asString(pop())->chars;
 
+    int length = (int)(strlen(a) + strlen(b) + 1);
+    char* c = strcat(a, b);
+
+    push(OBJ_VAL(copyString(c, length)));
+}
+
+static void multiplyString() {
+    int a = (int)AS_NUMBER(pop());
+    fprintf(stdout, "a: %d\n", a);
+    char* b = asString(pop())->chars;
+    fprintf(stdout, "b: %s\n", b);
+    char* c = malloc(a * strlen(b) + 1);
+    for (int i = 0; i < a; i++) {
+        strcat(c, b);
+    }
+
+    c[a * strlen(b)] = '\0';
+    fprintf(stdout, "c: %s\n", c);
+    push(OBJ_VAL(copyString(c, a * strlen(b) + 1)));
+    free(c);
+}
+
+/*
     int length = a->length + b->length;
     char* chars = ALLOCATE(char, length + 1);
     memcpy(chars, a->chars, a->length);
-    memcpy(chars + a->length, b->chars, b->length);
+    memcpy(chars + a->length-1, b->chars, b->length);
     chars[length] = '\0';
 
+    fprintf(stdout, "Concatenated %s\n", chars);
+
     ObjString* result = takeString(chars, length);
-    push(OBJ_VAL(result));
-}
+    push(OBJ_VAL(result)); */
+
 
 static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
@@ -133,20 +158,27 @@ static InterpretResult run() {
             case OP_LESS: BINARY_OP(BOOL_VAL, <); break;
             case OP_ADD: {
                 if (IS_STRING(peek(0)) || IS_STRING(peek(1))) {
-                    concatenate();
+                    concatenateString();
                 } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
                     double b = AS_NUMBER(pop());
                     double a = AS_NUMBER(pop());
                     push(NUMBER_VAL(a + b));
                 } else {
                     runtimeError(
-                        "Operands must be two numbers or two strings.");
+                        "Operands must be two numbers or one string and one bool/none/number.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
             }
             case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
-            case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
+            case OP_MULTIPLY: {
+                if  (IS_STRING(peek(1))) {
+                    multiplyString();
+                } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
+                    BINARY_OP(NUMBER_VAL, *);
+                }
+                break;
+            }
             case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
             case OP_NOT: push(BOOL_VAL(isFalsey(pop()))); break;
             case OP_LEFTSHIFT: BINARY_OP_INT(<<); break;
@@ -166,7 +198,6 @@ static InterpretResult run() {
                 return INTERPRET_OK;
             }
             default:
-                printf("default");
                 return INTERPRET_RUNTIME_ERROR;
         }
     }

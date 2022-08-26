@@ -34,17 +34,10 @@ ObjString* copyString(const char* chars, int length) {
     return allocateString(heapChars, length);
 }
 
-Value newString(const char* text, size_t length) {
-    char* heap = ALLOCATE(char, length + 1);
-    ObjString* string = ALLOCATE(ObjString, sizeof(ObjString));
-    string->obj.type = OBJ_STRING;
-    string->chars = heap;
-
-    if (text != NULL) {
-        strncpy(heap, text, length);
-        heap[length] = '\0';
-    }
-    return OBJ_VAL(string);
+ObjString* newString(const char* chars, int length) {
+    char* heapChars = ALLOCATE(char, length);
+    memcpy(heapChars, chars, length);
+    return allocateString(heapChars, length);
 }
 
 void printObject(Value value) {

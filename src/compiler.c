@@ -5,6 +5,7 @@
 #include "compiler.h"
 #include "scanner.h"
 #include "object.h"
+#include "value.h"
 
 #ifdef DEBUG_PRINT_CODE
 #include "debug.h"
@@ -138,6 +139,8 @@ static void binary() {
         case TOKEN_STAR: emitByte(OP_MULTIPLY); break;
         case TOKEN_SLASH: emitByte(OP_DIVIDE); break;
         case TOKEN_PERCENT: emitByte(OP_MODULO); break;
+        case TOKEN_LSHIFT: emitByte(OP_LEFTSHIFT); break;
+        case TOKEN_RSHIFT: emitByte(OP_RIGHTSHIFT); break;
         default: return;
     }
 }
@@ -162,8 +165,9 @@ static void number() {
 }
 
 static void string() {
-    emitConstant(newString(scanner.currentString,
-                           scanner.currentStringLength+1)); //TODO: add support for escape sequences
+ //   emitConstant(ns); //TODO: add support for escape sequences
+    emitConstant(OBJ_VAL(newString(parser.previous.start,
+                                    parser.previous.length)));
 }
 
 static void unary() {
@@ -201,8 +205,8 @@ ParseRule rules[] = {  //    prefix   | infix  |  precedence
     [TOKEN_GREATER_EQ]    = {NULL,      binary,   PREC_COMPARISON},
     [TOKEN_LESS]          = {NULL,      binary,   PREC_COMPARISON},
     [TOKEN_LESS_EQ]       = {NULL,      binary,   PREC_COMPARISON},
-    [TOKEN_LSHIFT]        = {NULL,      NULL,     PREC_NONE},
-    [TOKEN_RSHIFT]        = {NULL,      NULL,     PREC_NONE},
+    [TOKEN_LSHIFT]        = {NULL,      binary,   PREC_SHIFT},
+    [TOKEN_RSHIFT]        = {NULL,      binary,   PREC_SHIFT},
     [TOKEN_IDENTIFIER]    = {NULL,      NULL,     PREC_NONE},
     [TOKEN_STR]           = {string,    NULL,     PREC_NONE},
     [TOKEN_NUM]           = {number,    NULL,     PREC_NONE},
@@ -259,9 +263,12 @@ bool compile(const char* source, Chunk* chunk) {
     parser.panicMode = false;
 
     advance();
+    printf("parser.current.length: %d\n", parser.current.length);
+    printf("parser.current.start: %s\n", parser.current.start);
+    printf("parser.current.type: %d\n", (int)parser.current.type);
+    printf("parser.current.line: %d\n", parser.current.line);
+
     expression();
-    // print all available values
-    printf("");
     consume(TOKEN_EOF, "Expect end of expression.");
     endCompiler();
     return !parser.hadError;

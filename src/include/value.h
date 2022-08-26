@@ -19,7 +19,7 @@
 #define AS_OBJ(value)     ((value).as.obj)
 
 #define BOOL_VAL(value)     ((Value){VAL_BOOL, {.boolean = value}})
-#define NONE_VAL            ((Value){VAL_NONE, {.number = 0}})
+#define NONE_VAL            ((Value){VAL_NONE, {.integer = 0}})
 #define NUMBER_VAL(value)   ((Value){VAL_NUMBER, {.number = value}})
 #define INTEGER_VAL(value)   ((Value){VAL_INTEGER, {.integer = value}})
 #define OBJ_VAL(object)   ((Value){VAL_OBJ, {.obj = (Obj*)object}})
@@ -28,7 +28,7 @@ typedef struct Obj Obj;
 typedef struct ObjString ObjString;
 
 typedef enum {
-    VAL_BOOL = 0,
+    VAL_BOOL,
     VAL_NONE,
     VAL_NUMBER,
     VAL_INTEGER,
@@ -39,8 +39,8 @@ typedef struct {
     ValueType type;
     union {
         bool boolean;
-        double number;
         unsigned long integer;
+        double number;
         Obj* obj;
     } as;
   //  ObjString* (*asString)();

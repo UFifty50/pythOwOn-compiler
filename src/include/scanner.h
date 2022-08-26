@@ -19,7 +19,7 @@ typedef enum {                  //TODO: add more tokens / rename tokens
 
     // literals
     TOKEN_IDENTIFIER, TOKEN_STR, TOKEN_NUM,
-    TOKEN_INFINITY,                             //TODO: imnplement infinity
+    TOKEN_INFINITY,                             //TODO: implement infinity
 
     // keywords
     TOKEN_AND, TOKEN_CLASS, TOKEN_ELSE,

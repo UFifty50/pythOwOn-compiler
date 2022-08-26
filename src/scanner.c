@@ -12,6 +12,9 @@ void initScanner(const char* source) {
     scanner.start = source;
     scanner.current = source;
     scanner.line = 1;
+    scanner.currentChar = 0;
+    scanner.currentString = NULL;
+    scanner.currentStringLength = 0;
 }
 
 static bool isAlpha(char c) {
@@ -53,13 +56,15 @@ static Token makeToken(TokenType type) {
     Token token;
     token.type = type;
     if (token.type == TOKEN_STR) {
-        token.start = scanner.start;
         token.length = scanner.currentStringLength+1;
+        token.start = scanner.currentString;
+        scanner.current--;
     } else {
-        token.start = scanner.start;
         token.length = (int)(scanner.current - scanner.start);
-        token.line = scanner.line;
+        token.start = scanner.start;
     }
+
+    token.line = scanner.line;
     return token;
 }
 
@@ -174,25 +179,19 @@ static Token number() {
 }
 
 static char peekChar() {
-    return scanner.current[scanner.currentChar];
+    scanner.currentChar++;
+    scanner.current++;
+    return scanner.current[-1];
 }
 
 static void addStringChar(char c) {
-    fprintf(stdout, "currentStringLength: %d\n", scanner.currentStringLength);
-    fprintf(stdout, "c: %c\n", c);
-    fprintf(stdout, "currentStringLength: %d\n", scanner.currentStringLength);
     scanner.currentString = realloc(scanner.currentString, sizeof(char) * (scanner.currentStringLength + 2));
-    fprintf(stdout, "reallocated\n");
     scanner.currentString[scanner.currentStringLength] = c;
     scanner.currentStringLength++;
-    fprintf(stdout, "here\n");
 }
 
 static char nextChar() {
-    fprintf(stdout, "nextChar called\n");
     char c = peekChar();
-    fprintf(stdout, "nextChar: %c\n", c);
-    scanner.currentChar++;
     return c;
 }
 
@@ -200,31 +199,29 @@ static Token string() {
     scanner.currentStringLength = 0;
     scanner.currentString = (char*)malloc(sizeof(char) * 1);
     for (;;) {
-        fprintf(stdout, "scanner.currentChar = %d\n", scanner.currentChar);
         char c = nextChar();
-        fprintf(stdout, "c: %c\n", c);
-        if (c == '"' && !isAtEnd()) { printf("end\n"); break; }
+        if (c == '"') break;
         if (c != '"' && isAtEnd()) return errorToken("Unterminated string.");
+        if (c == '\n') scanner.line++;
         if (c == '\\') {
-            fprintf(stdout, "Escape character:  %c\n", c);
-            switch (nextChar()) {
+            switch (peekChar()) {
                 case '"':  addStringChar('"'); break;
                 case '\\': addStringChar('\\'); break;
                 case 'n':  addStringChar('\n'); break;
+                case '0':  addStringChar('\0'); break;
+                case 'r':  addStringChar('\r'); break;
+                case 't':  addStringChar('\t'); break;
                 default: return errorToken("Unknown escape sequence");
             }
         } else {
-            fprintf(stdout, "addStringChar called\n");
             addStringChar(c);
         }
     }
+
+  //  free(scanner.currentString);
     scanner.currentString[scanner.currentStringLength] = '\0';
-    fprintf(stdout, "%s\n", scanner.currentString);
-    fprintf(stdout, "%d\n", scanner.currentStringLength);
-    advance();
-    free(scanner.currentString);
     scanner.currentChar = 0;
-    scanner.currentStringLength = 0;
+    scanner.current++;
     return makeToken(TOKEN_STR);
 }
 
