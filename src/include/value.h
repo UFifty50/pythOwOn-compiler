@@ -1,13 +1,34 @@
 #ifndef pythowon_value_h
 #define pythowon_value_h
 
+#include <stdio.h>
+
 #include "common.h"
+#include "scanner.h"
+
+#define IS_BOOL(value)      ((value).type == VAL_BOOL)
+#define IS_NONE(value)      ((value).type == VAL_NONE)
+#define IS_NUMBER(value)    ((value).type == VAL_NUMBER || \
+                             (value).type == VAL_INTEGER)
+#define IS_INTEGER(value)    ((value).type == VAL_INTEGER)
+#define IS_OBJ(value)     ((value).type == VAL_OBJ)
+
+#define AS_BOOL(value)      ((value).as.boolean)
+#define AS_NUMBER(value)    ((value).as.number)
+#define AS_INTEGER(value)    ((value).as.integer)
+#define AS_OBJ(value)     ((value).as.obj)
+
+#define BOOL_VAL(value)     ((Value){VAL_BOOL, {.boolean = value}})
+#define NONE_VAL            ((Value){VAL_NONE, {.number = 0}})
+#define NUMBER_VAL(value)   ((Value){VAL_NUMBER, {.number = value}})
+#define INTEGER_VAL(value)   ((Value){VAL_INTEGER, {.integer = value}})
+#define OBJ_VAL(object)   ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
 typedef struct Obj Obj;
 typedef struct ObjString ObjString;
 
 typedef enum {
-    VAL_BOOL,
+    VAL_BOOL = 0,
     VAL_NONE,
     VAL_NUMBER,
     VAL_INTEGER,
@@ -22,24 +43,8 @@ typedef struct {
         unsigned long integer;
         Obj* obj;
     } as;
+  //  ObjString* (*asString)();
 } Value;
-
-#define IS_BOOL(value)      ((value).type == VAL_BOOL)
-#define IS_NONE(value)      ((value).type == VAL_NONE)
-#define IS_NUMBER(value)    ((value).type == VAL_NUMBER || \
-                             (value).type == VAL_INTEGER)
-#define IS_OBJ(value)     ((value).type == VAL_OBJ)
-
-#define AS_BOOL(value)      ((value).as.boolean)
-#define AS_NUMBER(value)    ((value).as.number)
-#define AS_INTEGER(value)    ((value).as.integer)
-#define AS_OBJ(value)     ((value).as.obj)
-
-#define BOOL_VAL(value)     ((Value){VAL_BOOL, {.boolean = value}})
-#define NONE_VAL            ((Value){VAL_NONE, {.number = 0}})
-#define NUMBER_VAL(value)   ((Value){VAL_NUMBER, {.number = value}})
-#define INTEGER_VAL(value)   ((Value){VAL_INTEGER, {.integer = value}})
-#define OBJ_VAL(object)   ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
 #define ISSIGNED(X) _Generic((X), \
                 short : true, \
@@ -66,5 +71,7 @@ void initValueArray(ValueArray* array);
 void writeValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
 void printValue(Value value);
+ObjString* asString(Value value);
+Value asBool(Value value);
 
 #endif

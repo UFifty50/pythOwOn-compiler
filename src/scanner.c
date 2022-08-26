@@ -1,14 +1,10 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "common.h"
 #include "scanner.h"
-
-typedef struct {
-    const char* start;
-    const char* current;
-    int line;
-} Scanner;
+#include "compiler.h"
 
 Scanner scanner;
 
@@ -37,7 +33,7 @@ static char advance() {
     return scanner.current[-1];
 }
 
-static char peek() {
+static char speek() {
     return *scanner.current;
 }
 
@@ -56,9 +52,14 @@ static bool match(char expected) {
 static Token makeToken(TokenType type) {
     Token token;
     token.type = type;
-    token.start = scanner.start;
-    token.length = (int)(scanner.current - scanner.start);
-    token.line = scanner.line;
+    if (token.type == TOKEN_STR) {
+        token.start = scanner.start;
+        token.length = scanner.currentStringLength+1;
+    } else {
+        token.start = scanner.start;
+        token.length = (int)(scanner.current - scanner.start);
+        token.line = scanner.line;
+    }
     return token;
 }
 
@@ -73,7 +74,7 @@ static Token errorToken(const char* msg) {
 
 static void skipWhitespace() {
     for (;;) {
-        char c = peek();
+        char c = speek();
         switch (c) {
             case ' ':
             case '\r':
@@ -85,13 +86,13 @@ static void skipWhitespace() {
                 advance();
                 break;
             case '#':
-     //           if (peekNext() == '|') {
-              //      while ((peek() != '|' || peekNext() != '#') && !isAtEnd()) advance();
-     //               advance();
-     //               advance();
-     //           } else {
-                    while (peek() != '\n' && !isAtEnd()) advance();
-      //          }
+                if (peekNext() == '|') {
+                    while ((speek() != '|' || peekNext() != '#') && !isAtEnd()) advance();
+                    advance();
+                    advance();
+                } else {
+                    while (speek() != '\n' && !isAtEnd()) advance();
+                }
                 break;
             default:
                 return;
@@ -149,38 +150,81 @@ static TokenType identifierType() {
         case 'v': return checkKeyword(1, 2, "ar", TOKEN_VAR);
         case 'w': return checkKeyword(1, 4, "hile", TOKEN_WHILE);
 
-      //  default: return TOKEN_IDENTIFIER;
+        default: return TOKEN_IDENTIFIER;
     }
     
     return TOKEN_IDENTIFIER;
 }
 
 static Token identifier() {
-    while (isAlpha(peek()) || isDigit(peek())) advance();
+    while (isAlpha(speek()) || isDigit(speek())) advance();
     return makeToken(identifierType());
 }
 
 static Token number() {
-    while (isDigit(peek())) advance();
+    while (isDigit(speek())) advance();
 
-    if (peek() == '.' && isDigit(peekNext())) {
+    if (speek() == '.' && isDigit(peekNext())) {
         advance();
 
-        while (isDigit(peek())) advance();
+        while (isDigit(speek())) advance();
     }
     
     return makeToken(TOKEN_NUM);
 }
 
+static char peekChar() {
+    return scanner.current[scanner.currentChar];
+}
+
+static void addStringChar(char c) {
+    fprintf(stdout, "currentStringLength: %d\n", scanner.currentStringLength);
+    fprintf(stdout, "c: %c\n", c);
+    fprintf(stdout, "currentStringLength: %d\n", scanner.currentStringLength);
+    scanner.currentString = realloc(scanner.currentString, sizeof(char) * (scanner.currentStringLength + 2));
+    fprintf(stdout, "reallocated\n");
+    scanner.currentString[scanner.currentStringLength] = c;
+    scanner.currentStringLength++;
+    fprintf(stdout, "here\n");
+}
+
+static char nextChar() {
+    fprintf(stdout, "nextChar called\n");
+    char c = peekChar();
+    fprintf(stdout, "nextChar: %c\n", c);
+    scanner.currentChar++;
+    return c;
+}
+
 static Token string() {
-    while (peek() != '"' && !isAtEnd()) {
-        if (peek() == '\n') scanner.line++;
-        advance();
+    scanner.currentStringLength = 0;
+    scanner.currentString = (char*)malloc(sizeof(char) * 1);
+    for (;;) {
+        fprintf(stdout, "scanner.currentChar = %d\n", scanner.currentChar);
+        char c = nextChar();
+        fprintf(stdout, "c: %c\n", c);
+        if (c == '"' && !isAtEnd()) { printf("end\n"); break; }
+        if (c != '"' && isAtEnd()) return errorToken("Unterminated string.");
+        if (c == '\\') {
+            fprintf(stdout, "Escape character:  %c\n", c);
+            switch (nextChar()) {
+                case '"':  addStringChar('"'); break;
+                case '\\': addStringChar('\\'); break;
+                case 'n':  addStringChar('\n'); break;
+                default: return errorToken("Unknown escape sequence");
+            }
+        } else {
+            fprintf(stdout, "addStringChar called\n");
+            addStringChar(c);
+        }
     }
-
-    if (isAtEnd()) return errorToken("Unterminated string.");
-
+    scanner.currentString[scanner.currentStringLength] = '\0';
+    fprintf(stdout, "%s\n", scanner.currentString);
+    fprintf(stdout, "%d\n", scanner.currentStringLength);
     advance();
+    free(scanner.currentString);
+    scanner.currentChar = 0;
+    scanner.currentStringLength = 0;
     return makeToken(TOKEN_STR);
 }
 

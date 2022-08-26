@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "object.h"
 #include "memory.h"
 #include "value.h"
+#include "vm.h"
 
 void initValueArray(ValueArray* array) {
     array->values = NULL;
@@ -55,4 +57,77 @@ bool valuesEqual(Value a, Value b) {
         }
         default:          return false;
     }
+}
+
+ObjString* asString(Value value) {
+    switch (value.type) {
+        case VAL_BOOL: {
+            bool v = AS_BOOL(value);
+            if (v) {
+                return copyString("true", 4);
+            } else {
+                return copyString("false", 5);
+            }
+        }
+        case VAL_NONE: return copyString("none", 4);
+        case VAL_INTEGER: {
+            unsigned long v = AS_INTEGER(value);
+            char* chars = malloc(32);
+            int length = snprintf(chars, 32, "%ld", v);
+            ObjString* str = copyString(chars, length);
+            free(chars);
+            return str;
+        }
+        case VAL_NUMBER: {
+            double v = AS_NUMBER(value);
+            char* chars = malloc(32);
+            int length = snprintf(chars, 32, "%g", v);
+            ObjString* str = copyString(chars, length);
+            free(chars);
+            return str;
+        }
+        case VAL_OBJ: return AS_STRING(value);
+        default:
+            runtimeError("Invalid value to asString\n"); break;
+    }
+    return AS_STRING(OBJ_VAL(""));
+}
+
+Value asBool(Value value) {
+    switch (value.type) {
+        case VAL_BOOL: return value;
+        case VAL_NONE: runtimeError("Cannot convert none to bool"); break;
+        case VAL_INTEGER: {
+            unsigned long v = AS_INTEGER(value);
+            if (v > 0) {
+                return BOOL_VAL(true);
+            } else {
+                return BOOL_VAL(false);
+            }
+        }
+        case VAL_NUMBER: {
+            double v = AS_NUMBER(value);
+            if (v > 0) {
+                if ((v - (int)v) != 0) {
+                    return BOOL_VAL(false);
+                } else {
+                    return BOOL_VAL(true);
+                }
+                return BOOL_VAL(true);
+            } else {
+                return BOOL_VAL(false);
+            }
+        }
+        case VAL_OBJ: {
+            ObjString* str = AS_STRING(value);
+            if (str->length == 0) {
+                return BOOL_VAL(false);
+            } else {
+                return BOOL_VAL(true);
+            }
+        }
+        default:
+            runtimeError("Invalid value to asBool\n"); break;
+    }
+    return BOOL_VAL(false);
 }

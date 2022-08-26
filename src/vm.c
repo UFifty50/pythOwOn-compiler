@@ -16,7 +16,7 @@ static void resetStack() {
     vm.stackCount = 0;
 }
 
-static void runtimeError(const char* format, ...) {
+void runtimeError(const char* format, ...) {
     va_list args;
     va_start(args, format);
     vfprintf(stderr, format, args);
@@ -55,18 +55,19 @@ Value pop() {
     return vm.stack[vm.stackCount];
 }
 
-static Value peek(int distance) {
+Value peek(int distance) {
     return vm.stack[vm.stackCount - 1 - distance];
 }
 
 static bool isFalsey(Value value) {
+    if (value.type == VAL_NUMBER) return AS_NUMBER(value) < 0 ? true : false;
     return IS_NONE(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
 static void concatenate() {
-    ObjString* b = AS_STRING(pop());
-    ObjString* a = AS_STRING(pop());
-    
+    ObjString* b = asString(pop());
+    ObjString* a = asString(pop());
+
     int length = a->length + b->length;
     char* chars = ALLOCATE(char, length + 1);
     memcpy(chars, a->chars, a->length);
@@ -90,6 +91,16 @@ static InterpretResult run() {
         double a = AS_NUMBER(pop()); \
         push(valueType(a op b)); \
     } while (false)
+#define BINARY_OP_INT(op) \
+    do { \
+        if (!IS_INTEGER(peek(0)) || !IS_INTEGER(peek(1))) { \
+            runtimeError("Operands must be Integers."); \
+            return INTERPRET_RUNTIME_ERROR; \
+        } \
+        unsigned long b = AS_INTEGER(pop()); \
+        unsigned long a = AS_INTEGER(pop()); \
+        push(INTEGER_VAL(a op b)); \
+    } while (false)             //TODO: handle invalid values better
 
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
@@ -102,7 +113,7 @@ static InterpretResult run() {
         printf("\n");
         disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
 #endif
-       uint8_t instruction;
+        uint8_t instruction;
         switch (instruction = READ_BYTE()) {
             case OP_CONSTANT: {
                 Value constant = READ_CONSTANT();
@@ -121,7 +132,7 @@ static InterpretResult run() {
             case OP_GREATER: BINARY_OP(BOOL_VAL, >); break;
             case OP_LESS: BINARY_OP(BOOL_VAL, <); break;
             case OP_ADD: {
-                if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+                if (IS_STRING(peek(0)) || IS_STRING(peek(1))) {
                     concatenate();
                 } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
                     double b = AS_NUMBER(pop());
@@ -138,24 +149,9 @@ static InterpretResult run() {
             case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
             case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
             case OP_NOT: push(BOOL_VAL(isFalsey(pop()))); break;
-            case OP_LEFTSHIFT: {
-                Value b = pop();  //TODO: handle invalid values in leftshift
-                Value a = pop();
-                push(INTEGER_VAL(AS_INTEGER(a) << AS_INTEGER(b)));
-                break;
-            }
-            case OP_RIGHTSHIFT: {
-                Value b = pop();  //TODO: handle invalid values in rightshift
-                Value a = pop();
-                push(INTEGER_VAL(AS_INTEGER(a) >> AS_INTEGER(b)));
-                break;
-            }
-            case OP_MODULO: {
-                Value b = pop();  //TODO: handle invalid values in modulo
-                Value a = pop();
-                push(INTEGER_VAL(AS_INTEGER(a) % AS_INTEGER(b)));
-                break;
-            }                       
+            case OP_LEFTSHIFT: BINARY_OP_INT(<<); break;
+            case OP_RIGHTSHIFT: BINARY_OP_INT(>>); break;
+            case OP_MODULO: BINARY_OP_INT(%); break;
             case OP_NEGATE: {
                 if(!IS_NUMBER(peek(0))) {
                     runtimeError("Operand must be a number.");
@@ -170,6 +166,7 @@ static InterpretResult run() {
                 return INTERPRET_OK;
             }
             default:
+                printf("default");
                 return INTERPRET_RUNTIME_ERROR;
         }
     }
@@ -177,6 +174,7 @@ static InterpretResult run() {
 #undef READ_BYTE
 #undef READ_CONSTANT
 #undef BINARY_OP
+#undef BINARY_OP_INT
 }
 
 InterpretResult interpret(const char* source) {

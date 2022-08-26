@@ -32,8 +32,9 @@ WDELOBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)\\%.o)
 all: build
 
 build:
+	@$(MAKE) clean
 	@[ -d obj ] || mkdir obj
-	$(MAKE) $(APPNAME)
+	@$(MAKE) $(APPNAME)
 
 # Builds the app
 $(APPNAME): $(OBJ)
@@ -47,10 +48,10 @@ $(OBJDIR)/%.o: $(SRCDIR)/%$(EXT)
 # Cleans complete project
 .PHONY: clean
 clean:
-	$(RM) $(DELOBJ) $(DEP) $(APPNAME)
+	-$(RM) $(DELOBJ) $(DEP) $(APPNAME) 2>/dev/null || true
 
 #################### Cleaning rules for Windows OS #####################
 # Cleans complete project
 .PHONY: cleanw
 cleanw:
-	$(DEL) $(WDELOBJ) $(DEP) $(APPNAME) $(EXE)
+	-$(DEL) $(WDELOBJ) $(DEP) $(APPNAME) $(EXE)

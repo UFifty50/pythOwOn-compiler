@@ -4,17 +4,11 @@
 #include "common.h"
 #include "compiler.h"
 #include "scanner.h"
+#include "object.h"
 
 #ifdef DEBUG_PRINT_CODE
 #include "debug.h"
 #endif
-
-typedef struct {
-    Token current;
-    Token previous;
-    bool hadError;
-    bool panicMode;
-} Parser;
 
 typedef enum {
     PREC_NONE,
@@ -168,8 +162,8 @@ static void number() {
 }
 
 static void string() {
-    emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
-                                    parser.previous.length - 2))); //TODO: add support for escape sequences
+    emitConstant(newString(scanner.currentString,
+                           scanner.currentStringLength+1)); //TODO: add support for escape sequences
 }
 
 static void unary() {
@@ -266,6 +260,8 @@ bool compile(const char* source, Chunk* chunk) {
 
     advance();
     expression();
+    // print all available values
+    printf("");
     consume(TOKEN_EOF, "Expect end of expression.");
     endCompiler();
     return !parser.hadError;

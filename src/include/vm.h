@@ -24,7 +24,9 @@ extern VM vm;
 void initVM();
 void freeVM();
 InterpretResult interpret(const char* source);
+void runtimeError(const char* format, ...);
 void push(Value value);
 Value pop();
+Value peek(int distance);
 
 #endif

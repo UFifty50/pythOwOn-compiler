@@ -14,11 +14,12 @@ typedef enum {                  //TODO: add more tokens / rename tokens
     // single/double char tokens
     TOKEN_EXCLAM, TOKEN_EXCLAM_EQ,
     TOKEN_EQ, TOKEN_EQ_EQ, TOKEN_GREATER,
-    TOKEN_GREATER_EQ, TOKEN_LESS, TOKEN_LESS_EQ,
-    TOKEN_LSHIFT, TOKEN_RSHIFT,
+    TOKEN_GREATER_EQ, TOKEN_LESS, 
+    TOKEN_LESS_EQ, TOKEN_LSHIFT, TOKEN_RSHIFT,
 
     // literals
     TOKEN_IDENTIFIER, TOKEN_STR, TOKEN_NUM,
+    TOKEN_INFINITY,                             //TODO: imnplement infinity
 
     // keywords
     TOKEN_AND, TOKEN_CLASS, TOKEN_ELSE,
@@ -36,6 +37,18 @@ typedef struct {
     int length;
     int line;
 } Token;
+
+typedef struct {
+    const char* start;
+    const char* current;
+    int line;
+    
+    char* currentString;
+    int currentStringLength;
+    int currentChar;
+} Scanner;
+
+extern Scanner scanner;
 
 void initScanner(const char* source);
 Token scanToken();
