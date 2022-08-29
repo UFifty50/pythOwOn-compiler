@@ -38,6 +38,7 @@ void printValue(Value value) {
         case VAL_NUMBER: printf("%g", AS_NUMBER(value)); break;
         case VAL_INTEGER: printf("%ld", AS_INTEGER(value)); break;
         case VAL_OBJ: printObject(value); break;
+        case VAL_EMPTY: printf("<empty>"); break;
   }
 }
 
@@ -48,14 +49,39 @@ bool valuesEqual(Value a, Value b) {
         case VAL_NONE:    return true;
         case VAL_NUMBER:  return AS_NUMBER(a) == AS_NUMBER(b);
         case VAL_INTEGER: return AS_INTEGER(a) == AS_INTEGER(b);
-        case VAL_OBJ: {
-            ObjString* aString = AS_STRING(a);
-            ObjString* bString = AS_STRING(a);
-            return aString->length == bString->length &&
-                memcmp(aString->chars, bString->chars,
-                        aString->length) == 0;
-        }
+        case VAL_OBJ:     return AS_OBJ(a) == AS_OBJ(b);
+        case VAL_EMPTY:   return true;
         default:          return false;
+    }
+}
+
+static uint32_t hashInt(unsigned long value) {
+    value = ((value >> 16) ^ value) * 0x45d9f3b;
+    value = ((value >> 16) ^ value) * 0x45d9f3b;
+    value = (value >> 16) ^ value;
+    return (uint32_t)value;
+}
+
+static uint32_t hashDouble(double value) {
+    union BitCast {
+        double value;
+        uint32_t ints[2];
+    };
+
+    union BitCast cast;
+    cast.value = value + 1.0;
+    return cast.ints[0] + cast.ints[1];
+}
+
+uint32_t hashValue(Value value) {
+    switch (value.type) {
+        case VAL_BOOL:    return AS_BOOL(value) ? 3 : 5;
+        case VAL_NONE:    return 7;
+        case VAL_NUMBER:  return hashDouble(AS_NUMBER(value));
+        case VAL_INTEGER: return hashInt(AS_INTEGER(value));
+        case VAL_OBJ:     return AS_STRING(value)->hash;
+        case VAL_EMPTY:   return 0;
+        default:          return 0;
     }
 }
 

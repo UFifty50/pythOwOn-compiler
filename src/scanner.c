@@ -205,12 +205,17 @@ static Token string() {
         if (c == '\n') scanner.line++;
         if (c == '\\') {
             switch (peekChar()) {
-                case '"':  addStringChar('"'); break;
-                case '\\': addStringChar('\\'); break;
-                case 'n':  addStringChar('\n'); break;
-                case '0':  addStringChar('\0'); break;
-                case 'r':  addStringChar('\r'); break;
-                case 't':  addStringChar('\t'); break;
+                case '"':  addStringChar('"'); break;  // double quote
+                case '\'': addStringChar('\''); break; // single quote
+                case 'n':  addStringChar('\n'); break; // newline
+                case 'r':  addStringChar('\r'); break; // carriage return
+                case 't':  addStringChar('\t'); break; // horizontal tab
+                case 'v':  addStringChar('\v'); break; // vertical tab
+                case 'f':  addStringChar('\f'); break; // form feed
+                case '\\': addStringChar('\\'); break; // backslash
+                case '0':  addStringChar('\0'); break; // null-terminating zero
+                case 'e':  addStringChar('\e'); break; // escape
+                case 'a':  addStringChar('\a'); break; // beep/bell (why???)
                 default: return errorToken("Unknown escape sequence");
             }
         } else {

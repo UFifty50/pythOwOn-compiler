@@ -12,6 +12,7 @@
                              (value).type == VAL_INTEGER)
 #define IS_INTEGER(value)    ((value).type == VAL_INTEGER)
 #define IS_OBJ(value)     ((value).type == VAL_OBJ)
+#define IS_EMPTY(value)   ((value).type == VAL_EMPTY)
 
 #define AS_BOOL(value)      ((value).as.boolean)
 #define AS_NUMBER(value)    ((value).as.number)
@@ -23,6 +24,7 @@
 #define NUMBER_VAL(value)   ((Value){VAL_NUMBER, {.number = value}})
 #define INTEGER_VAL(value)   ((Value){VAL_INTEGER, {.integer = value}})
 #define OBJ_VAL(object)   ((Value){VAL_OBJ, {.obj = (Obj*)object}})
+#define EMPTY_VAL          ((Value){VAL_EMPTY, {.integer = 0}})
 
 typedef struct Obj Obj;
 typedef struct ObjString ObjString;
@@ -32,7 +34,8 @@ typedef enum {
     VAL_NONE,
     VAL_NUMBER,
     VAL_INTEGER,
-    VAL_OBJ
+    VAL_OBJ,
+    VAL_EMPTY
 } ValueType;
 
 typedef struct {
@@ -73,5 +76,6 @@ void freeValueArray(ValueArray* array);
 void printValue(Value value);
 ObjString* asString(Value value);
 Value asBool(Value value);
+uint32_t hashValue(Value value);
 
 #endif

@@ -2,7 +2,7 @@
 #define pythowon_vm_h
 
 #include "chunk.h"
-
+#include "table.h"
 
 typedef struct {
     Chunk* chunk;
@@ -10,6 +10,7 @@ typedef struct {
     Value* stack;
     int stackCount;
     int stackCapacity;
+    Table strings;
     Obj* objects;
 } VM;
 

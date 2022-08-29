@@ -165,7 +165,6 @@ static void number() {
 }
 
 static void string() {
- //   emitConstant(ns); //TODO: add support for escape sequences
     emitConstant(OBJ_VAL(newString(parser.previous.start,
                                     parser.previous.length)));
 }
