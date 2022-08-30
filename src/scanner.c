@@ -214,7 +214,6 @@ static Token string() {
                 case 'f':  addStringChar('\f'); break; // form feed
                 case '\\': addStringChar('\\'); break; // backslash
                 case '0':  addStringChar('\0'); break; // null-terminating zero
-                case 'e':  addStringChar('\e'); break; // escape
                 case 'a':  addStringChar('\a'); break; // beep/bell (why???)
                 default: return errorToken("Unknown escape sequence");
             }
@@ -222,8 +221,7 @@ static Token string() {
             addStringChar(c);
         }
     }
-
-  //  free(scanner.currentString);
+    
     scanner.currentString[scanner.currentStringLength] = '\0';
     scanner.currentChar = 0;
     scanner.current++;

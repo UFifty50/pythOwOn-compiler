@@ -70,40 +70,29 @@ static void concatenateString() {
     char* b = asString(pop())->chars;
     char* a = asString(pop())->chars;
 
-    int length = (int)(strlen(a) + strlen(b) + 1);
-    char* c = strcat(a, b);
+    int length = (int)(strlen(a) + strlen(b));
+    char* chars = ALLOCATE(char, length + 1);
+    memcpy(chars, a, strlen(a));
+    memcpy(chars + strlen(a), b, strlen(b));
+    chars[length] = '\0';
 
-    push(OBJ_VAL(copyString(c, length)));
+    ObjString* result = takeString(chars, length);
+    push(OBJ_VAL(result));
 }
 
 static void multiplyString() {
     int a = (int)AS_NUMBER(pop());
-    fprintf(stdout, "a: %d\n", a);
     char* b = asString(pop())->chars;
-    fprintf(stdout, "b: %s\n", b);
     char* c = malloc(a * strlen(b) + 1);
+
     for (int i = 0; i < a; i++) {
         strcat(c, b);
     }
 
     c[a * strlen(b)] = '\0';
-    fprintf(stdout, "c: %s\n", c);
     push(OBJ_VAL(copyString(c, a * strlen(b) + 1)));
     free(c);
 }
-
-/*
-    int length = a->length + b->length;
-    char* chars = ALLOCATE(char, length + 1);
-    memcpy(chars, a->chars, a->length);
-    memcpy(chars + a->length-1, b->chars, b->length);
-    chars[length] = '\0';
-
-    fprintf(stdout, "Concatenated %s\n", chars);
-
-    ObjString* result = takeString(chars, length);
-    push(OBJ_VAL(result)); */
-
 
 static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
@@ -140,8 +129,7 @@ static InterpretResult run() {
         printf("\n");
         disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
 #endif
-        uint8_t instruction;
-        switch (instruction = READ_BYTE()) {
+        switch (READ_BYTE()) {  //uint8_t instruction = READ_BYTE()
             case OP_CONSTANT: {
                 Value constant = READ_CONSTANT();
                 push(constant);
@@ -159,7 +147,7 @@ static InterpretResult run() {
             case OP_GREATER: BINARY_OP(BOOL_VAL, >); break;
             case OP_LESS: BINARY_OP(BOOL_VAL, <); break;
             case OP_ADD: {
-                if (IS_STRING(peek(0)) || IS_STRING(peek(1))) {
+                if (IS_STRING(peek(1))) {
                     concatenateString();
                 } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
                     double b = AS_NUMBER(pop());
@@ -167,7 +155,7 @@ static InterpretResult run() {
                     push(NUMBER_VAL(a + b));
                 } else {
                     runtimeError(
-                        "Operands must be two numbers or one string and one bool/none/number.");
+                        "Operands must be two numbers or first operand must be a string.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
@@ -178,6 +166,10 @@ static InterpretResult run() {
                     multiplyString();
                 } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
                     BINARY_OP(NUMBER_VAL, *);
+                } else {
+                    runtimeError(
+                        "Operands must be two numbers or first operand must be a string.");
+                    return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
             }
@@ -194,9 +186,12 @@ static InterpretResult run() {
                 push(NUMBER_VAL(-AS_NUMBER(pop())));
                 break;
             }
+            case OP_PRINT: {
+                printValue(pop());   //TODO: convert to rawPrint
+                printf("\n");        // remove this
+                break;
+            }
             case OP_RETURN: {
-                printValue(pop());
-                printf("\n");
                 return INTERPRET_OK;
             }
             default:

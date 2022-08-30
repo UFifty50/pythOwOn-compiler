@@ -24,7 +24,8 @@ static Entry* findEntry(Entry* entries, int capacity, Value key) {
     Entry* tombstone = NULL;
 
     for (;;) {
-        Entry* entry = &entries[index];
+        Entry* entry = &(entries[index]);
+
         if (IS_EMPTY(entry->key)) {
             if (IS_NONE(entry->value)) {
                 return tombstone != NULL ? tombstone : entry;
@@ -113,6 +114,7 @@ ObjString* tableFindString(Table* table, const char * chars, int length, uint32_
     uint32_t index = hash % table->capacity;
     for (;;) {
         Entry* entry = &table->entries[index];
+        
         if (IS_EMPTY(entry->key)) return NULL;
 
         ObjString* string = AS_STRING(entry->key);

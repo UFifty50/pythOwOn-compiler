@@ -22,6 +22,7 @@ typedef enum {
     OP_RIGHTSHIFT,
     OP_MODULO,
     OP_NEGATE,
+    OP_PRINT,
     OP_RETURN,
 } OpCode;
 

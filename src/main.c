@@ -12,12 +12,13 @@ static void repl() {
     for (;;) {
         printf("PythOwOn <<< ");
 
-        if (!fgets(line, sizeof(line), stdin)) {
+         if (!fgets(line, sizeof(line), stdin)) {
             printf("\n");
             break;
         }
 
         interpret(line);
+        
     }
 }
 

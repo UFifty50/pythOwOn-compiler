@@ -1,4 +1,7 @@
-PythOwOn.exe
 .vscode/
 bak/
 obj/
+*.obj
+*.pdb
+*.ilk
+*.exe

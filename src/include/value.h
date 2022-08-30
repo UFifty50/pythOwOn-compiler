@@ -46,7 +46,7 @@ typedef struct {
         double number;
         Obj* obj;
     } as;
-  //  ObjString* (*asString)();
+    // TODO: maybe implement `ObjString* (*asString)();`?
 } Value;
 
 #define ISSIGNED(X) _Generic((X), \
