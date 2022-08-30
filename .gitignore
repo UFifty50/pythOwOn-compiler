@@ -5,3 +5,6 @@ obj/
 *.pdb
 *.ilk
 *.exe
+*.so
+*.o
+cc.txt

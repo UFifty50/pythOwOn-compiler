@@ -8,23 +8,24 @@
 
 #define IS_BOOL(value)      ((value).type == VAL_BOOL)
 #define IS_NONE(value)      ((value).type == VAL_NONE)
+#define IS_DOUBLE(value)    ((value).type == VAL_NUMBER)
 #define IS_NUMBER(value)    ((value).type == VAL_NUMBER || \
                              (value).type == VAL_INTEGER)
-#define IS_INTEGER(value)    ((value).type == VAL_INTEGER)
-#define IS_OBJ(value)     ((value).type == VAL_OBJ)
-#define IS_EMPTY(value)   ((value).type == VAL_EMPTY)
+#define IS_INTEGER(value)   ((value).type == VAL_INTEGER)
+#define IS_OBJ(value)       ((value).type == VAL_OBJ)
+#define IS_EMPTY(value)     ((value).type == VAL_EMPTY)
 
 #define AS_BOOL(value)      ((value).as.boolean)
 #define AS_NUMBER(value)    ((value).as.number)
-#define AS_INTEGER(value)    ((value).as.integer)
-#define AS_OBJ(value)     ((value).as.obj)
+#define AS_INTEGER(value)   ((value).as.integer)
+#define AS_OBJ(value)       ((value).as.obj)
 
 #define BOOL_VAL(value)     ((Value){VAL_BOOL, {.boolean = value}})
 #define NONE_VAL            ((Value){VAL_NONE, {.integer = 0}})
 #define NUMBER_VAL(value)   ((Value){VAL_NUMBER, {.number = value}})
-#define INTEGER_VAL(value)   ((Value){VAL_INTEGER, {.integer = value}})
-#define OBJ_VAL(object)   ((Value){VAL_OBJ, {.obj = (Obj*)object}})
-#define EMPTY_VAL          ((Value){VAL_EMPTY, {.integer = 0}})
+#define INTEGER_VAL(value)  ((Value){VAL_INTEGER, {.integer = value}})
+#define OBJ_VAL(object)     ((Value){VAL_OBJ, {.obj = (Obj*)object}})
+#define EMPTY_VAL           ((Value){VAL_EMPTY, {.integer = 0}})
 
 typedef struct Obj Obj;
 typedef struct ObjString ObjString;
@@ -41,8 +42,8 @@ typedef enum {
 typedef struct {
     ValueType type;
     union {
+        ulong integer;
         bool boolean;
-        unsigned long integer;
         double number;
         Obj* obj;
     } as;
@@ -56,8 +57,8 @@ typedef struct {
                 long long : true, \
                 unsigned short : false, \
                 unsigned int : false, \
-                unsigned long : false, \
-                unsigned long long : false, \
+                ulong : false, \
+                ulong long : false, \
                 float : true, \
                 double : true, \
                 long double : true \

@@ -17,8 +17,11 @@ static void repl() {
             break;
         }
 
-        interpret(line);
-        
+        interpret(line); 
+  //      interpret("var breakfast = \"beignets\";");
+  //      interpret("var beverage = \"cafe au lait\";");
+ //       interpret("breakfast = \"beignets with \" + beverage;");
+  //      interpret("print breakfast;");
     }
 }
 

@@ -34,10 +34,13 @@ void initVM() {
     vm.stackCapacity = 0;
     resetStack();
     vm.objects = NULL;
+
+    initTable(&vm.globals);
     initTable(&vm.strings);
 }
 
 void freeVM() {
+    freeTable(&vm.globals);
     freeTable(&vm.strings);
     freeObjects();
 }
@@ -63,7 +66,7 @@ Value peek(int distance) {
 
 static bool isFalsey(Value value) {
     if (value.type == VAL_NUMBER) return AS_NUMBER(value) < 0 ? true : false;
-    return IS_NONE(value) || (IS_BOOL(value) && !AS_BOOL(value));
+    return IS_NONE(value) || !AS_BOOL(asBool(value));
 }
 
 static void concatenateString() {
@@ -97,6 +100,7 @@ static void multiplyString() {
 static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+#define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(valueType, op) \
     do { \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
@@ -113,8 +117,8 @@ static InterpretResult run() {
             runtimeError("Operands must be Integers."); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
-        unsigned long b = AS_INTEGER(pop()); \
-        unsigned long a = AS_INTEGER(pop()); \
+        ulong b = AS_INTEGER(pop()); \
+        ulong a = AS_INTEGER(pop()); \
         push(INTEGER_VAL(a op b)); \
     } while (false)             //TODO: handle invalid values better
 
@@ -138,6 +142,33 @@ static InterpretResult run() {
             case OP_NONE: push(NONE_VAL); break;
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
+            case OP_POP: pop(); break;
+            case OP_GET_GLOBAL: {
+                pop();
+                ObjString* name = READ_STRING();
+                Value value;
+                if(!tableGet(&vm.globals, OBJ_VAL(name), &value)) {
+                    runtimeError("Undefined variable '%s'.", name->chars);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                push(value);
+                break;
+            }
+            case OP_DEF_GLOBAL: {
+                Value name = READ_CONSTANT();
+                tableSet(&vm.globals, name, peek(0));
+                pop();
+                break;
+            }
+            case OP_SET_GLOBAL: {
+                ObjString* name = READ_STRING();
+                if(tableSet(&vm.globals, OBJ_VAL(name), peek(0))) {
+                    tableDelete(&vm.globals, OBJ_VAL(name));
+                    runtimeError("Undefined variable %s.", name->chars);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
             case OP_EQUAL: {
                 Value b = pop();
                 Value a = pop();
@@ -150,9 +181,19 @@ static InterpretResult run() {
                 if (IS_STRING(peek(1))) {
                     concatenateString();
                 } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
-                    double b = AS_NUMBER(pop());
-                    double a = AS_NUMBER(pop());
-                    push(NUMBER_VAL(a + b));
+                    if (IS_INTEGER(peek(0)) && IS_INTEGER(peek(1))) {
+                        BINARY_OP_INT(+);
+                    } else if (IS_INTEGER(peek(0))) {
+                        ulong b = AS_INTEGER(pop());
+                        double a = AS_NUMBER(pop());
+                        push(NUMBER_VAL(a+b));
+                    } else if (IS_INTEGER(peek(1))) {
+                        double b = AS_NUMBER(pop());
+                        ulong a = AS_INTEGER(pop());
+                        push(NUMBER_VAL(a+b));
+                    } else {
+                    BINARY_OP(NUMBER_VAL, +);
+                    }
                 } else {
                     runtimeError(
                         "Operands must be two numbers or first operand must be a string.");
@@ -183,7 +224,13 @@ static InterpretResult run() {
                     runtimeError("Operand must be a number.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                push(NUMBER_VAL(-AS_NUMBER(pop())));
+                Value val = pop();
+                if(IS_DOUBLE(val)) {
+                    val = NUMBER_VAL(-AS_NUMBER(val));
+                } else {
+                    val = NUMBER_VAL(-(double)AS_INTEGER(val));
+                }
+                push(val);
                 break;
             }
             case OP_PRINT: {
@@ -201,6 +248,7 @@ static InterpretResult run() {
 
 #undef READ_BYTE
 #undef READ_CONSTANT
+#undef READ_STRING
 #undef BINARY_OP
 #undef BINARY_OP_INT
 }

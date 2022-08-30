@@ -252,6 +252,7 @@ Token scanToken() {
         case ';': return makeToken(TOKEN_SEMI);
         case '/': return makeToken(TOKEN_SLASH);
         case '*': return makeToken(TOKEN_STAR);
+        case '%': return makeToken(TOKEN_PERCENT);
         
         case '!':
             return makeToken(

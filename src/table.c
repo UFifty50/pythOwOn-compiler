@@ -24,7 +24,7 @@ static Entry* findEntry(Entry* entries, int capacity, Value key) {
     Entry* tombstone = NULL;
 
     for (;;) {
-        Entry* entry = &(entries[index]);
+        Entry* entry = &entries[index];
 
         if (IS_EMPTY(entry->key)) {
             if (IS_NONE(entry->value)) {

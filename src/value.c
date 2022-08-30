@@ -43,6 +43,14 @@ void printValue(Value value) {
 }
 
 bool valuesEqual(Value a, Value b) {
+    if (IS_INTEGER(a) && IS_DOUBLE(b)) {
+        fprintf(stdout, "a: %f, b: %f\n", AS_NUMBER(a), AS_NUMBER(b));
+        return (double)AS_INTEGER(a) == AS_NUMBER(b);
+    } else if (IS_DOUBLE(a) && IS_INTEGER(b)) {
+        fprintf(stdout, "a: %f, b: %f\n", AS_NUMBER(a), AS_NUMBER(b));
+        return AS_NUMBER(a) == (double)AS_INTEGER(b);
+    }
+
     if (a.type != b.type) return false;
     switch (a.type) {
         case VAL_BOOL:    return AS_BOOL(a) == AS_BOOL(b);
@@ -55,7 +63,7 @@ bool valuesEqual(Value a, Value b) {
     }
 }
 
-static uint32_t hashInt(unsigned long value) {
+static uint32_t hashInt(ulong value) {
     value = ((value >> 16) ^ value) * 0x45d9f3b;
     value = ((value >> 16) ^ value) * 0x45d9f3b;
     value = (value >> 16) ^ value;
@@ -97,7 +105,7 @@ ObjString* asString(Value value) {
         }
         case VAL_NONE: return copyString("none", 4);
         case VAL_INTEGER: {
-            unsigned long v = AS_INTEGER(value);
+            ulong v = AS_INTEGER(value);
             char* chars = malloc(32);
             int length = snprintf(chars, 32, "%ld", v);
             ObjString* str = copyString(chars, length);
@@ -124,7 +132,7 @@ Value asBool(Value value) {
         case VAL_BOOL: return value;
         case VAL_NONE: runtimeError("Cannot convert none to bool"); break;
         case VAL_INTEGER: {
-            unsigned long v = AS_INTEGER(value);
+            ulong v = AS_INTEGER(value);
             if (v > 0) {
                 return BOOL_VAL(true);
             } else {
@@ -146,7 +154,9 @@ Value asBool(Value value) {
         }
         case VAL_OBJ: {
             ObjString* str = AS_STRING(value);
-            if (str->length == 0) {
+            if (strcmp(str->chars, "true") == 0) return BOOL_VAL(true);
+            if (strcmp(str->chars, "false") == 0) return BOOL_VAL(false);
+            if (str->length == 1) {
                 return BOOL_VAL(false);
             } else {
                 return BOOL_VAL(true);

@@ -14,6 +14,7 @@ static Obj* allocateObject(size_t size, ObjType type) {
     Obj* object = (Obj*)reallocate(NULL, 0, size);
     object->type = type;
     object->next = vm.objects;
+ //   vm.objects = object;
     return object;
 }
 
@@ -50,9 +51,7 @@ ObjString* takeString(char* chars, int length) {
 ObjString* copyString(const char* chars, int length) {
     uint32_t hash = hashString(chars, length);
     ObjString* interned = tableFindString(&vm.strings, chars, length, hash);
-    if(interned != NULL) {
-        return interned;
-    }
+    if(interned != NULL) return interned;
 
     char* heapChars = ALLOCATE(char, length + 1);
     memcpy(heapChars, chars, length);
