@@ -43,7 +43,7 @@ static Entry* findEntry(Entry* entries, int capacity, Value key) {
 bool tableGet(Table* table, Value key, Value* value) {
     if (table->count == 0) return false;
 
-    Entry* entry = findEntry(table->entries, table->capacity, key);
+    const Entry* entry = findEntry(table->entries, table->capacity, key);
     if (IS_NONE(entry->key)) return false;
 
     *value = entry->value;
@@ -59,7 +59,7 @@ static void adjustCapacity(Table* table, int capacity) {
 
     table->count = 0;
     for (int i = 0; i < table->capacity; i++) {
-        Entry* entry = &table->entries[i];
+        const Entry* entry = &table->entries[i];
         if (IS_EMPTY(entry->key)) continue;
 
         Entry* dest = findEntry(entries, capacity, entry->key);
@@ -74,7 +74,7 @@ static void adjustCapacity(Table* table, int capacity) {
 }
 
 bool tableSet(Table* table, Value key, Value value) {
-    if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
+    if ((table->count + 1) > (table->capacity * TABLE_MAX_LOAD)) {
         int capacity = GROW_CAPACITY(table->capacity);
         adjustCapacity(table, capacity);
     }
@@ -99,9 +99,9 @@ bool tableDelete(Table* table, Value key) {
     return true;
 }
 
-void tableAddAll(Table* from, Table* to) {
+void tableAddAll(const Table* from, Table* to) {
     for (int i = 0; i < from->capacity; i++) {
-        Entry* entry = &from->entries[i];
+        const Entry* entry = &from->entries[i];
         if (!IS_EMPTY(entry->key)) {
             tableSet(to, entry->key, entry->value);
         }
@@ -114,7 +114,7 @@ ObjString* tableFindString(Table* table, const char * chars, int length, uint32_
     uint32_t index = hash % table->capacity;
     for (;;) {
         Entry* entry = &table->entries[index];
-        
+
         if (IS_EMPTY(entry->key)) return NULL;
 
         ObjString* string = AS_STRING(entry->key);

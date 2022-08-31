@@ -7,7 +7,7 @@
 #include "debug.h"
 #include "vm.h"
 
-static void repl() {
+static void repl(void) {
     char line[1024];
     for (;;) {
         printf("PythOwOn <<< ");
@@ -17,11 +17,7 @@ static void repl() {
             break;
         }
 
-        interpret(line); 
-  //      interpret("var breakfast = \"beignets\";");
-  //      interpret("var beverage = \"cafe au lait\";");
- //       interpret("breakfast = \"beignets with \" + beverage;");
-  //      interpret("print breakfast;");
+        interpret(line);
     }
 }
 

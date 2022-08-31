@@ -12,7 +12,7 @@
 
 VM vm;
 
-static void resetStack() {
+static void resetStack(void) {
     vm.stackCount = 0;
 }
 
@@ -23,13 +23,13 @@ void runtimeError(const char* format, ...) {
     va_end(args);
     fputs("\n", stderr);
 
-    size_t instruction = vm.ip - vm.chunk->code - 1;
+    size_t instruction = (size_t)(vm.ip - vm.chunk->code - 1);
     int line = vm.chunk->lines[instruction];
     fprintf(stderr, "[line %d] in script\n", line);
     resetStack();
 }
 
-void initVM() {
+void initVM(void) {
     vm.stack = NULL;
     vm.stackCapacity = 0;
     resetStack();
@@ -39,15 +39,15 @@ void initVM() {
     initTable(&vm.strings);
 }
 
-void freeVM() {
+void freeVM(void) {
     freeTable(&vm.globals);
     freeTable(&vm.strings);
     freeObjects();
 }
 
 void push(Value value) {
-    if (vm.stackCapacity < vm.stackCount + 1) {
-        int oldCapacity = vm.stackCapacity;
+    if (vm.stackCapacity < (vm.stackCount + 1)) {
+        int32_t oldCapacity = vm.stackCapacity;
         vm.stackCapacity = GROW_CAPACITY(oldCapacity);
         vm.stack = GROW_ARRAY(Value, vm.stack, oldCapacity, vm.stackCapacity);
     }
@@ -55,23 +55,26 @@ void push(Value value) {
     vm.stackCount++;
 }
 
-Value pop() {
+Value pop(void) {
     vm.stackCount--;
     return vm.stack[vm.stackCount];
 }
 
-Value peek(int distance) {
+Value peek(int32_t distance) {
     return vm.stack[vm.stackCount - 1 - distance];
 }
 
 static bool isFalsey(Value value) {
-    if (value.type == VAL_NUMBER) return AS_NUMBER(value) < 0 ? true : false;
-    return IS_NONE(value) || !AS_BOOL(asBool(value));
+    if (value.type == VAL_NUMBER) {
+        return AS_NUMBER(value) < 0 ? true : false;
+    } else {
+        return IS_NONE(value) || !AS_BOOL(asBool(value));
+    }
 }
 
-static void concatenateString() {
-    char* b = asString(pop())->chars;
-    char* a = asString(pop())->chars;
+static void concatenateString(void) {
+    char const* b = asString(pop())->chars;
+    char const* a = asString(pop())->chars;
 
     int length = (int)(strlen(a) + strlen(b));
     char* chars = ALLOCATE(char, length + 1);
@@ -83,21 +86,24 @@ static void concatenateString() {
     push(OBJ_VAL(result));
 }
 
-static void multiplyString() {
-    int a = (int)AS_NUMBER(pop());
-    char* b = asString(pop())->chars;
-    char* c = malloc(a * strlen(b) + 1);
+static void multiplyString(void) {
+    ulong a = AS_INTEGER(pop());
+    const char* b = asString(pop())->chars;
+    int length = (int)(a * strlen(b));
 
-    for (int i = 0; i < a; i++) {
-        strcat(c, b);
+    char* chars = ALLOCATE(char, length + 1);
+
+    memcpy(chars, b, strlen(b));
+    for (ulong i = strlen(b); i <= length; i+=strlen(b)) {
+        memcpy(chars+i, b, strlen(b));
     }
 
-    c[a * strlen(b)] = '\0';
-    push(OBJ_VAL(copyString(c, a * strlen(b) + 1)));
-    free(c);
+    chars[length] = '\0';
+    ObjString* result = takeString(chars, length);
+    push(OBJ_VAL(result));
 }
 
-static InterpretResult run() {
+static InterpretResult run(void) {
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 #define READ_STRING() AS_STRING(READ_CONSTANT())
@@ -125,7 +131,8 @@ static InterpretResult run() {
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
         printf("          ");
-        for (Value* slot = vm.stack; slot < vm.stack + vm.stackCount; slot++) {
+        for (const Value* slot = vm.stack;
+             slot < (vm.stack + vm.stackCount); slot++) {
             printf("[ ");
             printValue(*slot);
             printf(" ]");

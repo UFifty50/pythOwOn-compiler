@@ -27,20 +27,20 @@ static bool isDigit(char c) {
     return c >= '0' && c <= '9';
 }
 
-static bool isAtEnd() {
+static bool isAtEnd(void) {
     return *scanner.current == '\0';
 }
 
-static char advance() {
+static char advance(void) {
     scanner.current++;
     return scanner.current[-1];
 }
 
-static char speek() {
+static char speek(void) {
     return *scanner.current;
 }
 
-static char peekNext() {
+static char peekNext(void) {
     if (isAtEnd()) return '\0';
     return scanner.current[1];
 }
@@ -77,7 +77,7 @@ static Token errorToken(const char* msg) {
     return token;
 }
 
-static void skipWhitespace() {
+static void skipWhitespace(void) {
     for (;;) {
         char c = speek();
         switch (c) {
@@ -106,21 +106,21 @@ static void skipWhitespace() {
 }
 
 static TokenType checkKeyword(int start, int length, const char* rest, TokenType type) {
-    if (scanner.current - scanner.start == start + length &&
+    if ((scanner.current - scanner.start) == (start + length) &&
         memcmp(scanner.start + start, rest, length) == 0) {
     return type;
   }
 
   return TOKEN_IDENTIFIER;
-} 
+}
 
-static TokenType identifierType() {
+static TokenType identifierType(void) {
     switch (scanner.start[0]) {
         case 'a': return checkKeyword(1, 2, "nd", TOKEN_AND);
         case 'c': return checkKeyword(1, 4, "lass", TOKEN_CLASS);
         case 'd': return checkKeyword(1, 2, "ef", TOKEN_DEF);
         case 'e':
-            if (scanner.current - scanner.start > 1) {
+            if ((scanner.current - scanner.start) > 1) {
                 switch (scanner.start[1]) {
                 case 'l': return checkKeyword(2, 2, "se", TOKEN_ELSE);
                 case 'x': return checkKeyword(2, 5, "tends", TOKEN_EXTENDS);
@@ -129,7 +129,7 @@ static TokenType identifierType() {
             }
             break;
         case 'f':
-            if (scanner.current - scanner.start > 1) {
+            if ((scanner.current - scanner.start) > 1) {
                 switch (scanner.start[1]) {
                 case 'a': return checkKeyword(2, 3, "lse", TOKEN_FALSE);
                 case 'o': return checkKeyword(2, 1, "r", TOKEN_FOR);
@@ -144,7 +144,7 @@ static TokenType identifierType() {
         case 'r': return checkKeyword(1, 5, "eturn", TOKEN_RETURN);
         case 's': return checkKeyword(1, 4, "uper", TOKEN_SUPER);
         case 't':
-            if (scanner.current - scanner.start > 1) {
+            if ((scanner.current - scanner.start) > 1) {
                 switch (scanner.start[1]) {
                     case 'h': return checkKeyword(2, 2, "is", TOKEN_THIS);
                     case 'r': return checkKeyword(2, 2, "ue", TOKEN_TRUE);
@@ -157,16 +157,16 @@ static TokenType identifierType() {
 
         default: return TOKEN_IDENTIFIER;
     }
-    
+
     return TOKEN_IDENTIFIER;
 }
 
-static Token identifier() {
+static Token identifier(void) {
     while (isAlpha(speek()) || isDigit(speek())) advance();
     return makeToken(identifierType());
 }
 
-static Token number() {
+static Token number(void) {
     while (isDigit(speek())) advance();
 
     if (speek() == '.' && isDigit(peekNext())) {
@@ -174,11 +174,11 @@ static Token number() {
 
         while (isDigit(speek())) advance();
     }
-    
+
     return makeToken(TOKEN_NUM);
 }
 
-static char peekChar() {
+static char peekChar(void) {
     scanner.currentChar++;
     scanner.current++;
     return scanner.current[-1];
@@ -190,12 +190,12 @@ static void addStringChar(char c) {
     scanner.currentStringLength++;
 }
 
-static char nextChar() {
+static char nextChar(void) {
     char c = peekChar();
     return c;
 }
 
-static Token string() {
+static Token string(void) {
     scanner.currentStringLength = 0;
     scanner.currentString = (char*)malloc(sizeof(char) * 1);
     for (;;) {
@@ -221,14 +221,14 @@ static Token string() {
             addStringChar(c);
         }
     }
-    
+
     scanner.currentString[scanner.currentStringLength] = '\0';
     scanner.currentChar = 0;
     scanner.current++;
     return makeToken(TOKEN_STR);
 }
 
-Token scanToken() {
+Token scanToken(void) {
     skipWhitespace();
     scanner.start = scanner.current;
 
@@ -253,7 +253,7 @@ Token scanToken() {
         case '/': return makeToken(TOKEN_SLASH);
         case '*': return makeToken(TOKEN_STAR);
         case '%': return makeToken(TOKEN_PERCENT);
-        
+
         case '!':
             return makeToken(
                 match('=') ? TOKEN_EXCLAM_EQ : TOKEN_EXCLAM

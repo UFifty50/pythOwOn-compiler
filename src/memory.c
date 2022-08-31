@@ -22,10 +22,11 @@ static void freeObject(Obj* object) {
             FREE(ObjString, object);
             break;
         }
+        default: runtimeError("Unknown object type ID: %d", object->type); break;
     }
 }
 
-void freeObjects() {
+void freeObjects(void) {
     Obj* object = vm.objects;
     while (object != NULL) {
         Obj* next = object->next;

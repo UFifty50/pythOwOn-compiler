@@ -40,13 +40,12 @@ Parser parser;
 Chunk* compilingChunk;
 Table stringConstants;
 
-static Chunk* currentChunk() {
+static Chunk* currentChunk(void) {
     return compilingChunk;
 }
 
-static void errorAt(Token* token, const char* message) {
+static void errorAt(const Token* token, const char* message) {
     if (parser.panicMode) return;
-    
     parser.panicMode = true;
     fprintf(stderr, "[line %d] Error", token->line);
 
@@ -70,7 +69,7 @@ static void errorAtCurrent(const char* message) {
     errorAt(&parser.current, message);
 }
 
-static void advance() {
+static void advance(void) {
     parser.previous = parser.current;
 
     for (;;) {
@@ -109,7 +108,7 @@ static void emitBytes(uint8_t byte1, uint8_t byte2) {
     emitByte(byte2);
 }
 
-static void emitReturn() {
+static void emitReturn(void) {
     emitByte(OP_RETURN);
 }
 
@@ -124,7 +123,7 @@ static uint8_t emitConstant(Value value) {
     }
 }
 
-static void endCompiler() {
+static void endCompiler(void) {
     emitReturn();
 #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) {
@@ -133,13 +132,13 @@ static void endCompiler() {
 #endif
 }
 
-static void expression();
-static void statement();
-static void declaration();
+static void expression(void);
+static void statement(void);
+static void declaration(void);
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
-static uint8_t identifierConstant(Token* name) {         //could be more efficient but we have 65535 slots per chunk
+static uint8_t identifierConstant(const Token* name) {   //could be more efficient but we have 65535 slots per chunk
     Value string = OBJ_VAL(copyString(name->start, name->length));
     Value indexValue;
     if (tableGet(&stringConstants, string, &indexValue)) {
@@ -149,7 +148,6 @@ static uint8_t identifierConstant(Token* name) {         //could be more efficie
     uint8_t index = emitConstant(string);
     tableSet(&stringConstants, string, NUMBER_VAL((double)index));
     return index;
-// backup:  return emitConstant(OBJ_VAL(copyString(name->start, name->length)));
 }
 
 static uint8_t parseVariable(const char* errorMessage) {
@@ -163,7 +161,7 @@ static void defineVariable(uint8_t global) {
 
 static void binary(bool canAssign) {
     TokenType opType = parser.previous.type;
-    ParseRule* rule = getRule(opType);
+    const ParseRule* rule = getRule(opType);
     parsePrecedence((Precedence)(rule->precedence + 1));
 
     switch (opType) {
@@ -200,7 +198,7 @@ static void grouping(bool canAssign) {
 
 static void number(bool canAssign) {
     short dots = 0;
-    for (int i = 0; i < parser.previous.length+1; i++) {
+    for (int i = 0; i < (parser.previous.length+1); i++) {
         if (parser.previous.start[i] == '.') {
             dots++;
         }
@@ -253,9 +251,9 @@ static void unary(bool canAssign) {
 ParseRule rules[] = {  //    prefix   | infix  |  precedence
     [TOKEN_LPAREN]        = {grouping,  NULL,     PREC_NONE},
     [TOKEN_RPAREN]        = {NULL,      NULL,     PREC_NONE},
-    [TOKEN_LBRACE]        = {NULL,      NULL,     PREC_NONE}, 
+    [TOKEN_LBRACE]        = {NULL,      NULL,     PREC_NONE},
     [TOKEN_RBRACE]        = {NULL,      NULL,     PREC_NONE},
-    [TOKEN_LBRACK]        = {NULL,      NULL,     PREC_NONE}, 
+    [TOKEN_LBRACK]        = {NULL,      NULL,     PREC_NONE},
     [TOKEN_RBRACK]        = {NULL,      NULL,     PREC_NONE},
     [TOKEN_COMMA]         = {NULL,      NULL,     PREC_NONE},
     [TOKEN_DOT]           = {NULL,      NULL,     PREC_NONE},
@@ -325,17 +323,17 @@ static ParseRule* getRule(TokenType type) {
     return &rules[type];
 }
 
-static void expression() {
+static void expression(void) {
     parsePrecedence(PREC_ASSIGNMENT);
 }
 
-static void expressionStatement() {
+static void expressionStatement(void) {
     expression();
     consume(TOKEN_SEMI, "Expected ';' after expression.");
     emitByte(OP_POP);
 }
 
-static void varDeclaration() {
+static void varDeclaration(void) {
     uint8_t global = parseVariable("Expect variable name.");
 
     if (match(TOKEN_EQ)) {
@@ -349,13 +347,13 @@ static void varDeclaration() {
     defineVariable(global);
 }
 
-static void printStatement() {
+static void printStatement(void) {
     expression();
     consume(TOKEN_SEMI, "Expect ';' after value.");
     emitByte(OP_PRINT);
 }
 
-static void synchronize() {
+static void synchronize(void) {
     parser.panicMode = false;
 
     while (parser.previous.type != TOKEN_EOF) {
@@ -369,7 +367,6 @@ static void synchronize() {
             case TOKEN_WHILE:
             case TOKEN_PRINT:
             case TOKEN_RETURN: return;
-            
             default: ;
         }
 
@@ -377,7 +374,7 @@ static void synchronize() {
     }
 }
 
-static void declaration() {
+static void declaration(void) {
     if (match(TOKEN_VAR)) {
         varDeclaration();
     } else {
@@ -387,7 +384,7 @@ static void declaration() {
     if (parser.panicMode) synchronize();
 }
 
-static void statement() {
+static void statement(void) {
     if (match(TOKEN_PRINT)) {
         printStatement();
     } else {

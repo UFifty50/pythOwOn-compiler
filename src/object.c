@@ -14,7 +14,6 @@ static Obj* allocateObject(size_t size, ObjType type) {
     Obj* object = (Obj*)reallocate(NULL, 0, size);
     object->type = type;
     object->next = vm.objects;
- //   vm.objects = object;
     return object;
 }
 
@@ -33,7 +32,7 @@ static uint32_t hashString(const char* key, int length) {
         hash ^= key[i];
         hash *= 16777619;
     }
-    
+
     return hash;
 }
 
@@ -74,5 +73,7 @@ void printObject(Value value) {
         case OBJ_STRING:
             printf("%s", AS_CSTRING(value));
             break;
+
+        default: runtimeError("Unknown object type ID: %d", OBJ_TYPE(value)); break;
     }
 }

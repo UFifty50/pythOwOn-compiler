@@ -14,7 +14,7 @@ void initValueArray(ValueArray* array) {
 }
 
 void writeValueArray(ValueArray* array, Value value) {
-  if (array->capacity < array->count + 1) {
+  if (array->capacity < (array->count + 1)) {
     int oldCapacity = array->capacity;
     array->capacity = GROW_CAPACITY(oldCapacity);
     array->values = GROW_ARRAY(Value, array->values,
@@ -32,13 +32,14 @@ void freeValueArray(ValueArray* array) {
 
 void printValue(Value value) {
     switch (value.type) {
-        case VAL_BOOL:
-            printf(AS_BOOL(value) ? "true" : "false"); break;
+        case VAL_BOOL: printf(AS_BOOL(value) ? "true" : "false"); break;
         case VAL_NONE: printf("none"); break;
         case VAL_NUMBER: printf("%g", AS_NUMBER(value)); break;
         case VAL_INTEGER: printf("%ld", AS_INTEGER(value)); break;
         case VAL_OBJ: printObject(value); break;
         case VAL_EMPTY: printf("<empty>"); break;
+
+        default: break;
   }
 }
 
@@ -121,8 +122,7 @@ ObjString* asString(Value value) {
             return str;
         }
         case VAL_OBJ: return AS_STRING(value);
-        default:
-            runtimeError("Invalid value to asString\n"); break;
+        default: runtimeError("Invalid value to asString\n"); break;
     }
     return AS_STRING(OBJ_VAL(""));
 }
@@ -153,7 +153,7 @@ Value asBool(Value value) {
             }
         }
         case VAL_OBJ: {
-            ObjString* str = AS_STRING(value);
+            const ObjString* str = AS_STRING(value);
             if (strcmp(str->chars, "true") == 0) return BOOL_VAL(true);
             if (strcmp(str->chars, "false") == 0) return BOOL_VAL(false);
             if (str->length == 1) {
@@ -162,8 +162,7 @@ Value asBool(Value value) {
                 return BOOL_VAL(true);
             }
         }
-        default:
-            runtimeError("Invalid value to asBool\n"); break;
+        default: runtimeError("Invalid value to asBool\n"); break;
     }
     return BOOL_VAL(false);
 }
