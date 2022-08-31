@@ -1,3 +1,4 @@
+[![CodeFactor](https://www.codefactor.io/repository/github/ufifty50/pythowon-compiler/badge/master)](https://www.codefactor.io/repository/github/ufifty50/pythowon-compiler/overview/master)
 # PythOwOn - a toy language written in C
 ------------------------------
 

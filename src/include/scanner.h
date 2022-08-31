@@ -1,7 +1,7 @@
 #ifndef pythowon_scanner_h
 #define pythowon_scanner_h
 
-typedef enum {                  //TODO: add more tokens / rename tokens
+typedef enum {                  //TODO: add const token (maybe?)
     // single char tokens
     TOKEN_LPAREN, TOKEN_RPAREN,
     TOKEN_LBRACE, TOKEN_RBRACE,
