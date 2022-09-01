@@ -6,7 +6,7 @@
 
 typedef struct {
     Chunk* chunk;
-    uint8_t* ip;
+    uint32_t* ip;
     Value* stack;
     int stackCount;
     int stackCapacity;

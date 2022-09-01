@@ -29,20 +29,23 @@ typedef enum {
     OP_MODULO,
     OP_NEGATE,
     OP_PRINT,
+    OP_JUMP,
+    OP_JUMP_FALSE,
+    OP_LOOP,
     OP_RETURN,
 } OpCode;
 
 typedef struct {
     int count;
     int capacity;
-    uint8_t* code;
+    uint32_t* code;
     int* lines;
     ValueArray constants;
 } Chunk;
 
 void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);
-void writeChunk(Chunk* chunk, uint8_t byte, int line);
+void writeChunk(Chunk* chunk, uint32_t byte, int line);
 void writeConstant(int index, Chunk* chunk, int line);
 int addConstant(Chunk* chunk, Value value);
 
