@@ -1,23 +1,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "common.h"
 #include "chunk.h"
 #include "debug.h"
 #include "vm.h"
 
+void sigCtrlC(int signum);
+
 static void repl(void) {
     char line[1024];
     for (;;) {
         printf("PythOwOn <<< ");
 
+   //     signal(SIGINT, sigCtrlC);
+
          if (!fgets(line, sizeof(line), stdin)) {
             printf("\n");
-            break;
+    //        break;
         }
 
         interpret(line);
+    }
+}
+
+void sigCtrlC(int signum) {
+    printf("Ctrl-C detected, do you want to exit (y/n)? ");
+    int c = getchar();
+    if (c == 'y') {
+        exit(1);
+    } else {
+        printf("Ok, continuing...\n");
+        repl();
     }
 }
 

@@ -21,8 +21,8 @@ static int constantInstruction(const char* name, const Chunk* chunk, int offset)
 
 static int longConstantInstruction(const char* name, const Chunk* chunk, int offset) {
     uint32_t constant = chunk->code[offset + 1] |
-                        (uint8_t)(chunk->code[offset + 2] << 8) |
-                        (uint8_t)(chunk->code[offset + 3] << 16);
+                        (chunk->code[offset + 2] << 8) |
+                        (chunk->code[offset + 3] << 16);
     printf("%-16s %4d '", name, constant);
     printValue(chunk->constants.values[constant]);
     printf("'\n");
@@ -45,6 +45,15 @@ static int jumpInstruction(const char* name, int sign, const Chunk* chunk, int o
     jump |= chunk->code[offset + 2];
     printf("%-16s %4d -> %d\n", name, offset, offset + 3 + (sign * jump));
     return offset + 3;
+}
+
+static int jumpInstructionLong(const char* name, int sign, const Chunk* chunk, int offset) {
+    uint32_t jump = (uint32_t)(chunk->code[offset + 1] << 24);
+    jump |= (chunk->code[offset + 2] << 16);
+    jump |= (chunk->code[offset + 3] << 8);
+    jump |= chunk->code[offset + 4];
+    printf("%-16s %4d -> %d\n", name, offset, offset + 5 + (sign * jump));
+    return offset + 5;
 }
 
 int disassembleInstruction(const Chunk* chunk, int offset) {
@@ -109,6 +118,14 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return jumpInstruction("OP_JUMP", 1, chunk, offset);
         case OP_JUMP_FALSE:
             return jumpInstruction("OP_JUMP_FALSE", 1, chunk, offset);
+        case OP_JUMP_LONG:
+            return jumpInstructionLong("OP_JUMP_LONG", 1, chunk, offset);
+        case OP_JUMP_FALSE_LONG:
+            return jumpInstructionLong("OP_JUMP_FALSE_LONG", 1, chunk, offset);
+        case OP_LOOP:
+            return jumpInstructionLong("OP_LOOP", -1, chunk, offset);
+        case OP_LOOP_LONG:
+            return jumpInstructionLong("OP_LOOP_LONG", -1, chunk, offset);
         case OP_RETURN:
             return simpleInstruction("OP_RETURN", offset);
         case OP_PRINT:

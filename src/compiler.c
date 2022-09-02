@@ -120,8 +120,18 @@ static void emitBytes(uint8_t byte1, uint8_t byte2) {
     emitByte(byte2);
 }
 
-static void emitLoop(long long loopStart) {
+static void emitLoop(int loopStart) {
     emitByte(OP_LOOP);
+
+    long long offset = (currentChunk()->count - loopStart) + 2;
+    if (offset > UINT16_MAX) error("Loop body too large.");
+
+    emitByte((offset >> 8) & 0xff);
+    emitByte(offset & 0xff);
+}
+
+static void emitLoopLong(int loopStart) {
+    emitByte(OP_LOOP_LONG);
 
     long long offset = (currentChunk()->count - loopStart) + 4;
     if (offset > UINT32_MAX) error("Loop body too large.");
@@ -133,6 +143,13 @@ static void emitLoop(long long loopStart) {
 }
 
 static int emitJump(uint8_t instruction) {
+    emitByte(instruction);
+    emitByte(0xff);
+    emitByte(0xff);
+    return currentChunk()->count - 2;
+}
+
+static int emitJumpLong(uint8_t instruction) {
     emitByte(instruction);
     emitByte(0xff);
     emitByte(0xff);
@@ -156,7 +173,18 @@ static uint8_t emitConstant(Value value) {
     }
 }
 
-static void patchJump(long long offset) {
+static void patchJump(int offset) {
+    long long jump = currentChunk()->count - offset - 2;
+
+    if (jump > UINT16_MAX) {
+        error("Too much code to jump over.");
+    }
+
+    currentChunk()->code[offset] = (jump >> 8) & 0xff;
+    currentChunk()->code[offset + 1] = jump & 0xff;
+}
+
+static void patchJumpLong(int offset) {
     long long jump = currentChunk()->count - offset - 4;
 
     if (jump > UINT32_MAX) {
@@ -288,12 +316,12 @@ static void defineVariable(uint8_t global) {
 }
 
 static void and_(bool canAssign) {
-    int endJump = emitJump(OP_JUMP_FALSE);
+    int endJump = emitJumpLong(OP_JUMP_FALSE_LONG);
 
     emitByte(OP_POP);
     parsePrecedence(PREC_AND);
 
-    patchJump(endJump);
+    patchJumpLong(endJump);
 }
 
 static void binary(bool canAssign) {
@@ -353,14 +381,14 @@ static void number(bool canAssign) {
 }
 
 static void or_(bool canAssign) {
-    int elseJump = emitJump(OP_JUMP_FALSE);
-    int endJump = emitJump(OP_JUMP);
+    int elseJump = emitJumpLong(OP_JUMP_FALSE_LONG);
+    int endJump = emitJumpLong(OP_JUMP_LONG);
 
-    patchJump(elseJump);
+    patchJumpLong(elseJump);
     emitByte(OP_POP);
 
     parsePrecedence(PREC_OR);
-    patchJump(endJump);
+    patchJumpLong(endJump);
 }
 
 static void string(bool canAssign) {
@@ -502,17 +530,17 @@ static void ifStatement(void) {
     expression();
     consume(TOKEN_RPAREN, "Expects ')' after condition.");
 
-    int thenJump = emitJump(OP_JUMP_FALSE);
+    int thenJump = emitJumpLong(OP_JUMP_FALSE_LONG);
     emitByte(OP_POP);
     statement();
 
-    int elseJump = emitJump(OP_JUMP);
+    int elseJump = emitJumpLong(OP_JUMP_LONG);
 
-    patchJump(thenJump);
+    patchJumpLong(thenJump);
     emitByte(OP_POP);
 
     if (match(TOKEN_ELSE)) statement();
-    patchJump(elseJump);
+    patchJumpLong(elseJump);
 }
 
 static void varDeclaration(void) {
@@ -541,12 +569,12 @@ static void whileStatement(void) {
     expression();
     consume(TOKEN_RPAREN, "Expects ')' after condition.");
 
-    int exitJump = emitJump(OP_JUMP_FALSE);
+    int exitJump = emitJumpLong(OP_JUMP_FALSE_LONG);
     emitByte(OP_POP);
     statement();
-    emitLoop(loopStart);
+    emitLoopLong(loopStart);
 
-    patchJump(exitJump);
+    patchJumpLong(exitJump);
     emitByte(OP_POP);
 }
 
