@@ -10,6 +10,7 @@ typedef enum {                  //TODO: add const token (maybe?)
     TOKEN_MINUS, TOKEN_PLUS,
     TOKEN_PERCENT, TOKEN_SEMI,
     TOKEN_SLASH, TOKEN_STAR,
+    TOKEN_COLON,
 
     // single/double char tokens
     TOKEN_EXCLAM, TOKEN_EXCLAM_EQ,
@@ -19,14 +20,15 @@ typedef enum {                  //TODO: add const token (maybe?)
 
     // literals
     TOKEN_IDENTIFIER, TOKEN_STR, TOKEN_NUM,
-    TOKEN_INFINITY,                             //TODO: implement infinity
+    TOKEN_INFINITY, TOKEN_NAN,                  //TODO: implement infinity/NaN
 
     // keywords
     TOKEN_AND, TOKEN_CLASS, TOKEN_ELSE,
     TOKEN_FALSE, TOKEN_FOR, TOKEN_DEF, TOKEN_IF,
     TOKEN_NONE, TOKEN_OR, TOKEN_PRINT, TOKEN_RETURN,  //TODO: implement print in standard library instead of here
     TOKEN_SUPER, TOKEN_THIS, TOKEN_TRUE, TOKEN_VAR,
-    TOKEN_WHILE, TOKEN_EXTENDS,
+    TOKEN_WHILE, TOKEN_EXTENDS, TOKEN_SWITCH,
+    TOKEN_CASE, TOKEN_DEFAULT,
 
     TOKEN_ERROR, TOKEN_EOF
 } TokenType;

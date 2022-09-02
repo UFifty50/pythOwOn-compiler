@@ -621,6 +621,71 @@ static void whileStatement(void) {
     emitByte(OP_POP);
 }
 
+static void switchStatement(void) {
+    consume(TOKEN_LPAREN, "Expected '(' after 'switch'.");
+    expression();
+    consume(TOKEN_RPAREN, "Expected ')' after value.");
+    consume(TOKEN_LBRACE, "Expected '{' before cases.");
+
+    int state = 0;
+    int caseEnds[256];
+    int caseCount = 0;
+    int previousCaseSkip = -1;
+
+    while (!match(TOKEN_RBRACE) && !check(TOKEN_EOF)) {
+        if (match(TOKEN_CASE) || match(TOKEN_DEFAULT)) {
+            TokenType caseType = parser.previous.type;
+
+            if (state == 2) {
+                error("Can't have extra cases after the default case.");
+            }
+
+            if (state == 1) {
+                caseEnds[caseCount++] = emitJumpLong(OP_JUMP_LONG);
+
+                patchJumpLong(previousCaseSkip);
+                emitByte(OP_POP);
+            }
+
+            if (caseType == TOKEN_CASE) {
+                state = 1;
+
+                emitByte(OP_DUP);
+                expression();
+
+                consume(TOKEN_COLON, "Expected ':' after case value.");
+
+                emitByte(OP_EQUAL);
+                previousCaseSkip = emitJumpLong(OP_JUMP_FALSE_LONG);
+
+                emitByte(OP_POP);
+            } else if (caseType == TOKEN_DEFAULT) {
+                state = 2;
+                consume(TOKEN_COLON, "Expected ':' after default.");
+                previousCaseSkip = -1;
+            } else {
+                error("Only 'case' and 'default' allowed with switch statement.");
+            }
+        } else {
+            if (state == 0) {
+                error("Can't have statements before case.");
+            }
+            statement();
+        }
+    }
+
+    if (state == 1) {
+        patchJumpLong(previousCaseSkip);
+        emitByte(OP_POP);
+    }
+
+    for (int i = 0; i < caseCount; i++) {
+        patchJumpLong(caseEnds[i]);
+    }
+
+    emitByte(OP_POP);
+}
+
 static void synchronize(void) {
     parser.panicMode = false;
 
@@ -661,6 +726,8 @@ static void statement(void) {
         ifStatement();
     } else if (match(TOKEN_WHILE)) {
         whileStatement();
+    } else if (match(TOKEN_SWITCH)) {
+        switchStatement();
     } else if (match(TOKEN_LBRACE)) {
         beginScope();
         block();
