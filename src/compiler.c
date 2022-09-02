@@ -52,6 +52,9 @@ Compiler* current = NULL;
 Chunk* compilingChunk;
 Table stringConstants;
 
+int innerLoopStart = -1;
+int innerLoopScopeDepth = 0;
+
 static Chunk* currentChunk(void) {
     return compilingChunk;
 }
@@ -543,13 +546,18 @@ static void forStatement(void) {
     beginScope();
     consume(TOKEN_LPAREN, "Expected '(' after 'for'.");
     if (match(TOKEN_SEMI)) {
+        //no initializer
     } else if (match(TOKEN_VAR)) {
         varDeclaration();
     } else {
         expressionStatement();
     }
 
-    int loopStart = currentChunk()->count;
+    int surroundingLoopStart = innerLoopStart;
+    int surroundingLoopScopeDepth = innerLoopScopeDepth;
+    innerLoopStart = currentChunk()->count;
+    innerLoopScopeDepth = current->scopeDepth;
+
     int exitJump = -1;
     if (!match(TOKEN_SEMI)) {
         expression();
@@ -566,18 +574,21 @@ static void forStatement(void) {
         emitByte(OP_POP);
         consume(TOKEN_RPAREN, "Expected ')' after for clause.");
 
-        emitLoopLong(loopStart);
-        loopStart = incStart;
+        emitLoopLong(innerLoopStart);
+        innerLoopStart = incStart;
         patchJumpLong(bodyJump);
     }
 
     statement();
-    emitLoopLong(loopStart);
+    emitLoopLong(innerLoopStart);
 
     if (exitJump != -1) {
         patchJumpLong(exitJump);
         emitByte(OP_POP);
     }
+
+    innerLoopStart = surroundingLoopStart;
+    innerLoopScopeDepth = surroundingLoopScopeDepth;
 
     endScope();
 }
@@ -686,6 +697,22 @@ static void switchStatement(void) {
     emitByte(OP_POP);
 }
 
+static void continueStatement(void) {
+    if (innerLoopStart == -1) {
+        error("Can't use 'continue' outside of a loop.");
+    }
+
+    consume(TOKEN_SEMI, "Expected ';' after 'continue'.");
+
+    for (int i = current->localCount - 1;
+         i > 0 && current->locals[i].depth > innerLoopScopeDepth;
+         i--) {
+            emitByte(OP_POP);
+         }
+
+         emitLoopLong(innerLoopStart);
+}
+
 static void synchronize(void) {
     parser.panicMode = false;
 
@@ -728,6 +755,8 @@ static void statement(void) {
         whileStatement();
     } else if (match(TOKEN_SWITCH)) {
         switchStatement();
+    } else if (match(TOKEN_CONTINUE)) {
+        continueStatement();
     } else if (match(TOKEN_LBRACE)) {
         beginScope();
         block();

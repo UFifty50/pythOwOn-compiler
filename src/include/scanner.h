@@ -28,7 +28,8 @@ typedef enum {                  //TODO: add const token (maybe?)
     TOKEN_NONE, TOKEN_OR, TOKEN_PRINT, TOKEN_RETURN,  //TODO: implement print in standard library instead of here
     TOKEN_SUPER, TOKEN_THIS, TOKEN_TRUE, TOKEN_VAR,
     TOKEN_WHILE, TOKEN_EXTENDS, TOKEN_SWITCH,
-    TOKEN_CASE, TOKEN_DEFAULT,
+    TOKEN_CASE, TOKEN_DEFAULT, TOKEN_CONTINUE,
+    TOKEN_BREAK,
 
     TOKEN_ERROR, TOKEN_EOF
 } TokenType;
