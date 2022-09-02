@@ -519,10 +519,67 @@ static void block(void) {
     consume(TOKEN_RBRACE, "Expected '}' at end of block.");
 }
 
+static void varDeclaration(void) {
+    uint8_t global = parseVariable("Expect variable name.");
+
+    if (match(TOKEN_EQ)) {
+        expression();
+    } else {
+        emitByte(OP_NONE);
+    }
+
+    consume(TOKEN_SEMI, "Expected ';' after variable declaration.");
+
+    defineVariable(global);
+}
+
 static void expressionStatement(void) {
     expression();
     consume(TOKEN_SEMI, "Expected ';' after expression.");
     emitByte(OP_POP);
+}
+
+static void forStatement(void) {
+    beginScope();
+    consume(TOKEN_LPAREN, "Expected '(' after 'for'.");
+    if (match(TOKEN_SEMI)) {
+    } else if (match(TOKEN_VAR)) {
+        varDeclaration();
+    } else {
+        expressionStatement();
+    }
+
+    int loopStart = currentChunk()->count;
+    int exitJump = -1;
+    if (!match(TOKEN_SEMI)) {
+        expression();
+        consume(TOKEN_SEMI, "Expected ';'.");
+
+        exitJump = emitJumpLong(OP_JUMP_FALSE_LONG);
+        emitByte(OP_POP);
+    }
+
+    if (!match(TOKEN_RPAREN)) {
+        int bodyJump = emitJumpLong(OP_JUMP_LONG);
+        int incStart = currentChunk()->count;
+        expression();
+        emitByte(OP_POP);
+        consume(TOKEN_RPAREN, "Expected ')' after for clause.");
+
+        emitLoopLong(loopStart);
+        loopStart = incStart;
+        patchJumpLong(bodyJump);
+    }
+
+    statement();
+    emitLoopLong(loopStart);
+
+    if (exitJump != -1) {
+        patchJumpLong(exitJump);
+        emitByte(OP_POP);
+    }
+
+    endScope();
 }
 
 static void ifStatement(void) {
@@ -541,20 +598,6 @@ static void ifStatement(void) {
 
     if (match(TOKEN_ELSE)) statement();
     patchJumpLong(elseJump);
-}
-
-static void varDeclaration(void) {
-    uint8_t global = parseVariable("Expect variable name.");
-
-    if (match(TOKEN_EQ)) {
-        expression();
-    } else {
-        emitByte(OP_NONE);
-    }
-
-    consume(TOKEN_SEMI, "Expected ';' after variable declaration.");
-
-    defineVariable(global);
 }
 
 static void printStatement(void) {
@@ -612,6 +655,8 @@ static void declaration(void) {
 static void statement(void) {
     if (match(TOKEN_PRINT)) {
         printStatement();
+    } else if (match(TOKEN_FOR)) {
+        forStatement();
     } else if (match(TOKEN_IF)) {
         ifStatement();
     } else if (match(TOKEN_WHILE)) {
