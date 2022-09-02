@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "memory.h"
 #include "object.h"
@@ -15,6 +16,21 @@ static Obj* allocateObject(size_t size, ObjType type) {
     object->type = type;
     object->next = vm.objects;
     return object;
+}
+
+ObjFunction* newFunction(void) {
+    ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
+    function->arity = 0;
+    function->defArity = 0;
+    function->name = NULL;
+    initChunk(&function->chunk);
+    return function;
+}
+
+ObjNative* newNative(NativeFn function) {
+    ObjNative* native = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
+    native->function = function;
+    return native;
 }
 
 static ObjString* allocateString(char* chars, int length, uint32_t hash) {
@@ -68,12 +84,28 @@ ObjString* newString(const char* chars, int length) {
     return allocateString(heapChars, length, hash);
 }
 
+static void printFunction(ObjFunction* function) {
+    if (function->name == NULL) {
+        printf("<script>");
+        return;
+    }
+    printf("<fn %s>", function->name->chars);
+ ///   printf("<func %s at 0x%.10" PRIXPTR ">", function->name->chars, (uintptr_t)function);
+  //  pop();
+}
+
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
+        case OBJ_FUNCTION:
+            printFunction(AS_FUNCTION(value));
+            break;
+        case OBJ_NATIVE:
+            printf("<native func at 0x%.10" PRIXPTR ">", (uintptr_t)AS_FUNCTION(value));
+            break;
         case OBJ_STRING:
             printf("%s", AS_CSTRING(value));
             break;
 
-        default: runtimeError("Unknown object type ID: %d", OBJ_TYPE(value)); break;
+        default: runtimeError("InternalError: ", "Unknown object type ID: %d", OBJ_TYPE(value)); break;
     }
 }

@@ -20,7 +20,6 @@ typedef enum {
     OP_GREATER,
     OP_LESS,
     OP_ADD,
-    OP_SUBTRACT,
     OP_MULTIPLY,
     OP_DIVIDE,
     OP_NOT,
@@ -36,6 +35,7 @@ typedef enum {
     OP_LOOP,
     OP_LOOP_LONG,
     OP_DUP,
+    OP_CALL,
     OP_RETURN,
 } OpCode;
 

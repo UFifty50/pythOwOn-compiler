@@ -29,7 +29,7 @@ typedef enum {                  //TODO: add const token (maybe?)
     TOKEN_SUPER, TOKEN_THIS, TOKEN_TRUE, TOKEN_VAR,
     TOKEN_WHILE, TOKEN_EXTENDS, TOKEN_SWITCH,
     TOKEN_CASE, TOKEN_DEFAULT, TOKEN_CONTINUE,
-    TOKEN_BREAK,
+    TOKEN_BREAK,TOKEN_IN,
 
     TOKEN_ERROR, TOKEN_EOF
 } TokenType;

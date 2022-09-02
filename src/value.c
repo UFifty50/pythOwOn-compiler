@@ -122,7 +122,7 @@ ObjString* asString(Value value) {
             return str;
         }
         case VAL_OBJ: return AS_STRING(value);
-        default: runtimeError("Invalid value to asString\n"); break;
+        default: runtimeError("ValueError: ", "Invalid value to asString\n"); break;
     }
     return AS_STRING(OBJ_VAL(""));
 }
@@ -130,7 +130,7 @@ ObjString* asString(Value value) {
 Value asBool(Value value) {
     switch (value.type) {
         case VAL_BOOL: return value;
-        case VAL_NONE: runtimeError("Cannot convert none to bool"); break;
+        case VAL_NONE: runtimeError("ValueError: ", "Cannot convert none to bool"); break;
         case VAL_INTEGER: {
             ulong v = AS_INTEGER(value);
             if (v > 0) {
@@ -162,7 +162,7 @@ Value asBool(Value value) {
                 return BOOL_VAL(true);
             }
         }
-        default: runtimeError("Invalid value to asBool\n"); break;
+        default: runtimeError("ValueError: ", "Invalid value to asBool\n"); break;
     }
     return BOOL_VAL(false);
 }
