@@ -4,7 +4,7 @@
 
 # Compiler settings - Can be customized.
 CC = gcc
-CXXFLAGS = -std=c17 -Wall -Wno-unused-function -Isrc/include
+CXXFLAGS = -std=c17 -Wall -Wno-unused-function -Isrc/include -g
 LDFLAGS = 
 
 # Makefile settings - Can be customized.

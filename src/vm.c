@@ -107,7 +107,7 @@ static bool call(ObjFunction* function, int argCount) {
     CallFrame* frame = &vm.frames[vm.frameCount++];
     frame->function = function;
     frame->ip = function->chunk.code;
-    frame->slots = &vm.stack[vm.stackCount - argCount - 1];
+    frame->slots = &(vm.stack[(vm.stackCount - 1) - argCount]);
     return true;
 }
 

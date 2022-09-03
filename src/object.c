@@ -89,8 +89,8 @@ static void printFunction(ObjFunction* function) {
         printf("<script>");
         return;
     }
-    printf("<fn %s>", function->name->chars);
- ///   printf("<func %s at 0x%.10" PRIXPTR ">", function->name->chars, (uintptr_t)function);
+ //   printf("<fn %s>", function->name->chars);
+    printf("<func %s at 0x%.10" PRIXPTR ">", function->name->chars, (uintptr_t)function);
   //  pop();
 }
 

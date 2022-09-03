@@ -70,6 +70,7 @@ static Chunk* currentChunk(void) {
 static void slice(const char *str, char *result, size_t start, size_t end)
 {
     strncpy(result, str + start, end - start);
+    result[end] = '\0';
 }
 
 static void errorAt(const Token* token, const char* message) {
@@ -82,9 +83,11 @@ static void errorAt(const Token* token, const char* message) {
     } else if (token->type == TOKEN_ERROR) {
         // empty
     } else {
-        char line[token->length];
+        char* line = (char*)malloc(token->length);
+    //    char line[token->length+1];
         slice(token->start, line, 0, token->length);
         fprintf(stderr, " at '%s'", line);
+        free(line);
     }
 
     fprintf(stderr, ": %s\n", message);
