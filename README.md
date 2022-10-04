@@ -8,4 +8,4 @@ This is a compiler for https://github.com/virejdasani/pythOwO written in C - As 
 To make this language I'm following along with the https://www.craftinginterpreters.com/ book, adding my own little features as I go.
 
 ## TODO
-- see [projects](/users/UFifty50/projects/1) for TODOs
+- see [projects](https://github.com/users/UFifty50/projects/1) for TODOs
